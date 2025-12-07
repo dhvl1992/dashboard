@@ -3,110 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Portfolio Time Machine</title>
+    <title>Portfolio Final</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --primary: #0056b3; --bg: #f4f7f6; }
+        :root { --primary: #0056b3; --bg: #f2f4f8; --text: #333; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); margin: 0; padding: 15px; padding-bottom: 80px; }
         
-        .container { max-width: 800px; margin: 0 auto; }
+        .container { max-width: 600px; margin: 0 auto; }
         
-        /* Header Card */
-        .header-card { background: white; padding: 25px 20px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); text-align: center; margin-bottom: 20px; }
-        
-        .label-text { font-size: 0.85em; color: #888; letter-spacing: 1px; text-transform: uppercase; font-weight: 600; }
-        .total-value { font-size: 2.5em; font-weight: 800; color: var(--primary); margin: 5px 0 20px 0; letter-spacing: -1px; }
-        
-        /* Filter Row */
-        .filter-row { display: flex; justify-content: center; margin-bottom: 15px; }
-        .btn-group { display: flex; background: #eef2f5; border-radius: 12px; padding: 4px; }
-        .filter-btn { padding: 8px 24px; border: none; background: transparent; color: #666; cursor: pointer; font-weight: 600; font-size: 0.95em; border-radius: 10px; transition: all 0.2s; }
-        .filter-btn.active { background: white; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        /* HEADER CARD */
+        .header-card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); text-align: center; margin-bottom: 20px; }
+        .label { font-size: 0.8em; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        .total-value { font-size: 2.6em; font-weight: 800; color: var(--primary); margin: 5px 0 20px 0; letter-spacing: -1px; }
 
-        /* Date Dropdown (Fixed Layout) */
-        .date-row { margin-top: 10px; display: flex; justify-content: center; }
-        .date-select { 
-            appearance: none; -webkit-appearance: none; 
-            background: #fff url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E") no-repeat right 15px center;
-            background-size: 12px;
-            padding: 10px 40px 10px 20px; border-radius: 30px; border: 2px solid #eef2f5; 
-            font-size: 0.95em; color: #444; font-weight: 500; width: 100%; max-width: 280px; text-align: center;
-        }
-
-        /* Charts */
-        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-        .chart-card { background: white; padding: 15px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); height: 220px; }
-        @media (max-width: 600px) { .charts-grid { grid-template-columns: 1fr; } }
-
-        /* Table */
-        .table-card { background: white; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); overflow: hidden; }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: #fcfcfc; padding: 15px; text-align: left; font-size: 0.75em; color: #999; text-transform: uppercase; border-bottom: 1px solid #f0f0f0; }
-        td { padding: 15px; border-bottom: 1px solid #f8f8f8; vertical-align: middle; }
-        tr:last-child td { border-bottom: none; }
+        /* BUTTONS */
+        .controls { display: flex; flex-direction: column; gap: 12px; }
         
-        .ticker { font-weight: 700; color: #2c3e50; font-size: 1em; display: block; }
-        .owner-badge { font-size: 0.7em; background: #eef2f5; color: #666; padding: 2px 8px; border-radius: 4px; font-weight: 600; margin-left: 5px; vertical-align: text-top; }
-        .qty-text { font-size: 0.8em; color: #999; margin-top: 2px; }
-        .money { font-family: 'Segoe UI', monospace; font-weight: 600; color: #333; }
-        .price-sub { font-size: 0.8em; color: #999; display: block; margin-top: 2px; }
+        /* Owner Filter Segmented Control */
+        .filter-box { background: #f0f2f5; padding: 4px; border-radius: 12px; display: flex; }
+        .filter-btn { flex: 1; border: none; background: transparent; padding: 10px; font-weight: 600; color: #666; border-radius: 10px; font-size: 0.9em; transition: all 0.2s; cursor: pointer; }
+        .filter-btn.active { background: white; color: var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+
+        /* Date Button (Triggers Popup) */
+        .date-trigger { width: 100%; background: white; border: 2px solid #eef2f5; padding: 12px; border-radius: 12px; font-weight: 600; color: #444; font-size: 0.95em; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .date-trigger:after { content: '▼'; font-size: 0.7em; color: #888; }
+
+        /* POPUP MODAL (Hidden by default) */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; align-items: flex-end; }
+        .modal-overlay.open { display: flex; }
+        .modal-content { background: white; width: 100%; max-height: 60vh; border-radius: 20px 20px 0 0; padding: 20px; overflow-y: auto; animation: slideUp 0.3s ease; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
+        .modal-title { font-weight: bold; margin-bottom: 15px; font-size: 1.1em; color: #333; text-align: center; }
+        .date-option { display: block; width: 100%; padding: 15px; border: none; border-bottom: 1px solid #eee; background: white; font-size: 1em; text-align: left; color: #333; }
+        .date-option:active { background: #f5f5f5; }
+
+        /* CHARTS */
+        .charts-area { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .chart-box { background: white; padding: 10px; border-radius: 16px; height: 180px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+        @media (max-width: 400px) { .charts-area { grid-template-columns: 1fr; } }
+
+        /* SMART LIST (Replaces Table) */
+        .list-card { background: white; border-radius: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); padding: 5px 0; }
+        
+        /* The Magic Row Layout */
+        .stock-row { display: flex; justify-content: space-between; padding: 15px 20px; border-bottom: 1px solid #f4f4f4; align-items: center; }
+        .stock-row:last-child { border-bottom: none; }
+        
+        /* Left Side */
+        .row-left { display: flex; flex-direction: column; gap: 2px; }
+        .stock-name { font-weight: 700; font-size: 1em; color: #222; }
+        .stock-badge { display: inline-block; font-size: 0.65em; background: #e3f2fd; color: #0056b3; padding: 2px 6px; border-radius: 4px; margin-left: 6px; vertical-align: middle; }
+        .stock-qty { font-size: 0.8em; color: #888; }
+
+        /* Right Side */
+        .row-right { text-align: right; }
+        .stock-value { font-weight: 700; font-size: 1em; color: #222; font-family: 'Segoe UI', monospace; }
+        .stock-price { font-size: 0.8em; color: #888; margin-top: 2px; }
+        
+        .past-indicator { color: #e67e22; font-size: 0.7em; font-weight: 600; }
+
     </style>
 </head>
 <body>
 
 <div class="container">
+    
     <div class="header-card">
-        <div class="label-text" id="dateLabel">Total Net Worth</div>
-        <div class="total-value" id="displayTotal">Loading...</div>
-        
-        <div class="filter-row">
-            <div class="btn-group">
-                <button class="filter-btn active" onclick="setOwnerFilter('ALL')">ALL</button>
-                <button class="filter-btn" onclick="setOwnerFilter('URP')">URP</button>
-                <button class="filter-btn" onclick="setOwnerFilter('DUP')">DUP</button>
-            </div>
-        </div>
+        <div class="label" id="mainLabel">Total Net Worth</div>
+        <div class="total-value" id="displayTotal">...</div>
 
-        <div class="date-row">
-            <select class="date-select" id="dateFilter" onchange="setDateFilter(this.value)">
-                <option value="LATEST">Live Data (Latest)</option>
-                </select>
+        <div class="controls">
+            <div class="filter-box">
+                <button class="filter-btn active" onclick="setOwner('ALL')">ALL</button>
+                <button class="filter-btn" onclick="setOwner('URP')">URP</button>
+                <button class="filter-btn" onclick="setOwner('DUP')">DUP</button>
+            </div>
+
+            <button class="date-trigger" onclick="openDateModal()" id="dateBtnText">
+                📅 Latest (Live Data)
+            </button>
         </div>
     </div>
 
-    <div class="charts-grid">
-        <div class="chart-card">
+    <div class="charts-area">
+        <div class="chart-box">
             <canvas id="growthChart"></canvas>
         </div>
-        <div class="chart-card">
+        <div class="chart-box">
             <canvas id="pieChart"></canvas>
         </div>
     </div>
 
-    <div class="table-card">
-        <table id="stockTable">
-            <thead>
-                <tr>
-                    <th>Stock</th>
-                    <th style="text-align:right">Price</th>
-                    <th style="text-align:right">Value</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+    <div class="list-card" id="stockList">
+        </div>
+
+</div>
+
+<div class="modal-overlay" id="dateModal" onclick="closeDateModal(event)">
+    <div class="modal-content">
+        <div class="modal-title">Select Time Period</div>
+        <button class="date-option" onclick="selectDate('LATEST')">⚡ Latest (Live)</button>
+        <div id="pastDatesList"></div>
     </div>
 </div>
 
 <script>
-    // --- CONFIGURATION ---
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRw_iz9-dZrycABZQ_unuvRj8Pgeu6JSANkQyFlbQYEKzd9GyiqzgPAz6T492I32LhT37sJBp8JzU1o/pub?output=csv";
-    // ---------------------
 
     let allData = [];
     let currentOwner = 'ALL';
-    let timeTravelIndex = -1; 
-    let mainPieChart = null;
-    let mainGrowthChart = null;
+    let timeIndex = -1; // -1 = Latest
+    let mainPie, mainGrowth;
 
     async function init() {
         try {
@@ -117,122 +126,135 @@
             allData = rows.map(row => {
                 const c = row.split(',');
                 if (c.length < 6) return null;
-                const histRaw = c[4].replace(/"/g, '').split('|').map(Number).filter(n => !isNaN(n));
+                const hist = c[4].replace(/"/g, '').split('|').map(Number).filter(n => !isNaN(n));
                 return {
-                    ticker: c[0].replace('NSE:', '').replace('BOM:', ''),
+                    ticker: c[0].replace(/NSE:|BOM:/g, ''),
                     qty: parseFloat(c[1]),
                     avg: parseFloat(c[2]),
                     livePrice: parseFloat(c[3]),
-                    history: histRaw,
+                    history: hist,
                     owner: c[5].trim().toUpperCase()
                 };
-            }).filter(item => item && item.qty);
+            }).filter(i => i && i.qty);
 
-            populateDateDropdown();
-            renderDashboard();
-
-        } catch (err) { console.error(err); alert("Error loading data"); }
+            populateDates();
+            render();
+        } catch (e) { console.error(e); }
     }
 
-    function populateDateDropdown() {
-        const select = document.getElementById('dateFilter');
-        // Limit drop down to 10 days to save scrolling space on mobile
-        for (let i = 1; i <= 20; i++) {
-            const option = document.createElement('option');
-            option.value = i; 
-            option.text = `${i} Days Ago`;
-            select.appendChild(option);
+    // --- POPUP LOGIC ---
+    function openDateModal() { document.getElementById('dateModal').classList.add('open'); }
+    
+    function closeDateModal(e) { 
+        if(e.target.id === 'dateModal') document.getElementById('dateModal').classList.remove('open'); 
+    }
+
+    function populateDates() {
+        const list = document.getElementById('pastDatesList');
+        for(let i=1; i<=20; i++) {
+            const btn = document.createElement('button');
+            btn.className = 'date-option';
+            btn.innerText = `↺ ${i} Market Days Ago`;
+            btn.onclick = () => selectDate(i);
+            list.appendChild(btn);
         }
     }
 
-    function setOwnerFilter(filter) {
-        currentOwner = filter;
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.innerText === filter);
-        });
-        renderDashboard();
+    function selectDate(val) {
+        timeIndex = val === 'LATEST' ? -1 : val;
+        
+        // Update Button Text
+        const txt = val === 'LATEST' ? '📅 Latest (Live Data)' : `↺ ${val} Days Ago`;
+        document.getElementById('dateBtnText').innerText = txt;
+        
+        // Update Label
+        document.getElementById('mainLabel').innerText = val === 'LATEST' ? "Total Net Worth" : `Net Worth (${val} Days Ago)`;
+
+        // Close Modal
+        document.getElementById('dateModal').classList.remove('open');
+        render();
     }
 
-    function setDateFilter(val) {
-        timeTravelIndex = val === "LATEST" ? -1 : parseInt(val);
-        const label = timeTravelIndex === -1 ? "Total Net Worth" : `Net Worth (${timeTravelIndex} Days Ago)`;
-        document.getElementById('dateLabel').innerText = label;
-        renderDashboard();
+    // --- RENDER LOGIC ---
+    function setOwner(o) {
+        currentOwner = o;
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.innerText === o));
+        render();
     }
 
-    function renderDashboard() {
-        const tbody = document.querySelector('#stockTable tbody');
-        tbody.innerHTML = '';
+    function render() {
+        const list = document.getElementById('stockList');
+        list.innerHTML = '';
         
         const filtered = allData.filter(d => currentOwner === 'ALL' || d.owner === currentOwner);
-        let grandTotal = 0;
-        let pieLabels = [];
-        let pieValues = [];
-        let portfolioHistory = new Array(30).fill(0); 
+        let total = 0;
+        let pLabels=[], pValues=[], gData=new Array(30).fill(0);
 
         filtered.forEach(item => {
-            let displayPrice = item.livePrice;
-            if (timeTravelIndex !== -1) {
-                const histIndex = item.history.length - 1 - timeTravelIndex;
-                if (histIndex >= 0 && histIndex < item.history.length) displayPrice = item.history[histIndex];
+            // Price Logic
+            let price = item.livePrice;
+            if(timeIndex !== -1) {
+                const idx = item.history.length - 1 - timeIndex;
+                if(idx >= 0) price = item.history[idx];
             }
 
-            const val = item.qty * displayPrice;
-            grandTotal += val;
-            pieLabels.push(item.ticker);
-            pieValues.push(val);
+            const val = item.qty * price;
+            total += val;
+            pLabels.push(item.ticker);
+            pValues.push(val);
 
-            // History Chart Calculation
+            // History Logic
             const offset = 30 - item.history.length;
-            item.history.forEach((p, idx) => {
-                const globalIdx = idx + offset;
-                if(globalIdx >= 0 && globalIdx < 30) portfolioHistory[globalIdx] += (p * item.qty);
+            item.history.forEach((p, i) => {
+                if(i+offset >=0 && i+offset < 30) gData[i+offset] += (p * item.qty);
             });
 
-            // Draw Row
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>
-                    <span class="ticker">${item.ticker}<span class="owner-badge">${item.owner}</span></span>
-                    <div class="qty-text">${item.qty} shares</div>
-                </td>
-                <td style="text-align:right">
-                    <div class="money">₹${displayPrice.toFixed(2)}</div>
-                    <div class="price-sub">${timeTravelIndex === -1 ? 'Live' : 'Past'}</div>
-                </td>
-                <td style="text-align:right" class="money">₹${Math.round(val).toLocaleString('en-IN')}</td>
+            // HTML Row (Flexbox Layout)
+            const div = document.createElement('div');
+            div.className = 'stock-row';
+            div.innerHTML = `
+                <div class="row-left">
+                    <div class="stock-name">${item.ticker}<span class="stock-badge">${item.owner}</span></div>
+                    <div class="stock-qty">${item.qty} shares</div>
+                </div>
+                <div class="row-right">
+                    <div class="stock-value">₹${Math.round(val).toLocaleString('en-IN')}</div>
+                    <div class="stock-price">
+                        ${timeIndex !== -1 ? '<span class="past-indicator">Past: </span>' : ''}
+                        ₹${price.toFixed(2)}
+                    </div>
+                </div>
             `;
-            tbody.appendChild(tr);
+            list.appendChild(div);
         });
 
-        document.getElementById('displayTotal').innerText = '₹' + grandTotal.toLocaleString('en-IN', {maximumFractionDigits: 0});
-        updateCharts(pieLabels, pieValues, portfolioHistory);
+        document.getElementById('displayTotal').innerText = '₹' + total.toLocaleString('en-IN', {maximumFractionDigits: 0});
+        drawCharts(pLabels, pValues, gData);
     }
 
-    function updateCharts(pLabels, pValues, gData) {
-        // Pie
+    function drawCharts(labels, values, histData) {
         const pCtx = document.getElementById('pieChart');
-        if (mainPieChart) mainPieChart.destroy();
-        mainPieChart = new Chart(pCtx, {
+        const gCtx = document.getElementById('growthChart');
+        
+        if(mainPie) mainPie.destroy();
+        if(mainGrowth) mainGrowth.destroy();
+
+        // Pie
+        mainPie = new Chart(pCtx, {
             type: 'doughnut',
-            data: {
-                labels: pLabels,
-                datasets: [{ data: pValues, backgroundColor: ['#4e79a7','#f28e2b','#e15759','#76b7b2','#59a14f','#edc948','#b07aa1','#ff9da7','#9c755f'], borderWidth: 0 }]
-            },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display: false}, title: {display: true, text: 'Allocation'} } }
+            data: { labels: labels, datasets: [{ data: values, backgroundColor: ['#4e79a7','#f28e2b','#e15759','#76b7b2','#59a14f','#edc948'], borderWidth: 0 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: false, title: {display: true, text:'Allocation'} }, layout: {padding: 10} }
         });
 
         // Growth
-        const gCtx = document.getElementById('growthChart');
-        if (mainGrowthChart) mainGrowthChart.destroy();
-        const isUp = gData[29] >= gData[0];
-        mainGrowthChart = new Chart(gCtx, {
+        const isUp = histData[29] >= histData[0];
+        mainGrowth = new Chart(gCtx, {
             type: 'line',
-            data: {
-                labels: Array.from({length:30}, (_,i)=>i),
-                datasets: [{ data: gData, borderColor: isUp?'#28a745':'#dc3545', backgroundColor: isUp?'rgba(40,167,69,0.1)':'rgba(220,53,69,0.1)', fill: true, tension: 0.4, pointRadius: 0, borderWidth: 2 }]
+            data: { 
+                labels: Array.from({length:30},(_,i)=>i), 
+                datasets: [{ data: histData, borderColor: isUp?'#28a745':'#dc3545', backgroundColor: isUp?'rgba(40,167,69,0.1)':'rgba(220,53,69,0.1)', fill: true, pointRadius:0, tension: 0.3 }] 
             },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display: false}, title: {display: true, text: '30-Day Growth'}, tooltip: {enabled: false} }, scales: {x:{display:false}, y:{display:false}} }
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: false, title: {display: true, text:'30-Day Trend'} }, scales:{x:{display:false}, y:{display:false}}, layout: {padding: 10} }
         });
     }
 
