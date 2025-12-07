@@ -3,34 +3,162 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portfolio Dashboard</title>
+    <title>My Portfolio</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <style>
-        body {
-            font-family: sans-serif;
-            margin: 0;
-            padding: 20px;
-            text-align: center;
-            background-color: #f4f4f4;
-            color: #333;
-        }
-        h1 {
-            color: #0056b3;
-            margin-bottom: 30px;
-        }
-        iframe {
-            width: 97%; /* Adjust as needed */
-            height: 2100px; /* Adjust as needed */
-            border: 1px solid #ddd;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            border-radius: 8px;
-        }
+        body { font-family: sans-serif; background: #f4f6f8; margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        
+        h1 { text-align: center; color: #333; }
+        
+        /* Dashboard Stats */
+        .stats { text-align: center; margin-bottom: 30px; padding: 20px; background: #e3f2fd; border-radius: 8px; }
+        .total-label { font-size: 0.9em; color: #555; text-transform: uppercase; letter-spacing: 1px; }
+        .total-amount { font-size: 2.5em; font-weight: bold; color: #1565c0; margin-top: 5px; }
+
+        /* Table Styles */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { text-align: left; padding: 12px; background: #f8f9fa; color: #666; font-size: 0.85em; border-bottom: 2px solid #ddd; }
+        td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: middle; }
+        
+        .stock-ticker { font-weight: bold; color: #2c3e50; }
+        .stock-shares { font-size: 0.8em; color: #888; }
+        
+        /* Mini Chart container */
+        .chart-box { width: 120px; height: 50px; }
     </style>
 </head>
 <body>
 
-    <h1>My Portfolio Dashboard</h1>
+<div class="container">
+    <h1>Portfolio Dashboard</h1>
 
-    <iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vQ6PS1zHnIJPmuLc7rCDeahSH_jmSkSHxdcfqeCFaVjeY88xcX94sNBACfoN2eVX8t3O80iIVMDiFYg/pubhtml?widget=true&amp;headers=false"></iframe>
+    <div class="stats">
+        <div class="total-label">Total Portfolio Value</div>
+        <div class="total-amount" id="grandTotal">Loading...</div>
+    </div>
+
+    <table id="portfolioTable">
+        <thead>
+            <tr>
+                <th>Stock</th>
+                <th>Price</th>
+                <th>Total Value</th>
+                <th>30-Day Trend</th>
+            </tr>
+        </thead>
+        <tbody>
+            </tbody>
+    </table>
+</div>
+
+<script>
+    // YOUR LINK IS ALREADY HERE
+    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRw_iz9-dZrycABZQ_unuvRj8Pgeu6JSANkQyFlbQYEKzd9GyiqzgPAz6T492I32LhT37sJBp8JzU1o/pub?output=csv";
+
+    async function loadData() {
+        try {
+            const response = await fetch(CSV_URL);
+            const text = await response.text();
+            
+            // Split into rows and remove the header (first row)
+            const rows = text.split('\n').slice(1);
+            
+            const tbody = document.querySelector("#portfolioTable tbody");
+            let totalPortfolioValue = 0;
+
+            rows.forEach((row, index) => {
+                // Ignore empty rows
+                if (!row.trim()) return;
+
+                // Split columns by comma
+                // CSV Structure: Ticker, Qty, Avg, LivePrice, HistoryString
+                const cols = row.split(',');
+                
+                // Safety check: ensure we have enough columns
+                if (cols.length < 5) return;
+
+                const ticker = cols[0];
+                const qty = parseFloat(cols[1]);
+                const livePrice = parseFloat(cols[3]);
+                
+                // CLEAN HISTORY: Google might add "Close" text or quotes. We filter for numbers only.
+                const historyRaw = cols[4]; 
+                const historyData = historyRaw.replace(/"/g, '') // remove quotes
+                                            .split('|')        // split by pipe
+                                            .map(val => parseFloat(val)) // convert to number
+                                            .filter(val => !isNaN(val)); // remove "Close" text
+
+                // Calculate Value
+                const rowValue = qty * livePrice;
+                if (!isNaN(rowValue)) {
+                    totalPortfolioValue += rowValue;
+                }
+
+                // Create HTML Row
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>
+                        <div class="stock-ticker">${ticker}</div>
+                        <div class="stock-shares">${qty} shares</div>
+                    </td>
+                    <td>₹${livePrice.toFixed(2)}</td>
+                    <td><strong>₹${rowValue.toLocaleString('en-IN', {maximumFractionDigits: 0})}</strong></td>
+                    <td>
+                        <div class="chart-box">
+                            <canvas id="chart-${index}"></canvas>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+
+                // Draw Chart
+                drawChart(`chart-${index}`, historyData, livePrice);
+            });
+
+            // Update Grand Total
+            document.getElementById("grandTotal").innerText = 
+                "₹" + totalPortfolioValue.toLocaleString('en-IN', {maximumFractionDigits: 2});
+
+        } catch (error) {
+            console.error(error);
+            alert("Error loading data! check console.");
+        }
+    }
+
+    function drawChart(canvasId, data, currentPrice) {
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        
+        // Green if up, Red if down
+        const start = data[0];
+        const end = data[data.length - 1];
+        const color = end >= start ? '#2ecc71' : '#e74c3c';
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.map(x => ''), // No text labels
+                datasets: [{
+                    data: data,
+                    borderColor: color,
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    tension: 0.1,
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                scales: { x: { display: false }, y: { display: false } }
+            }
+        });
+    }
+
+    loadData();
+</script>
 
 </body>
 </html>
