@@ -2,62 +2,80 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Portfolio 2.0</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Time Machine</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #0056b3; --bg: #f0f2f5; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 10px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); margin: 0; padding: 10px; }
         
-        /* Layout */
-        .container { max-width: 800px; margin: 0 auto; padding-bottom: 50px; }
+        .container { max-width: 800px; margin: 0 auto; padding-bottom: 60px; }
         
-        /* Header & Filters */
+        /* Header Card */
         .header-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center; margin-bottom: 15px; }
-        .total-value { font-size: 2em; font-weight: 800; color: var(--primary); margin: 10px 0; }
+        .total-value { font-size: 2.2em; font-weight: 800; color: var(--primary); margin: 5px 0; }
+        .sub-text { font-size: 0.9em; color: #666; margin-bottom: 15px; }
         
-        .filters { display: flex; justify-content: center; gap: 10px; margin-top: 15px; }
-        .filter-btn { padding: 8px 20px; border: 1px solid var(--primary); background: white; color: var(--primary); border-radius: 20px; cursor: pointer; font-weight: bold; }
+        /* Controls Row */
+        .controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 15px; }
+        
+        /* Filter Buttons */
+        .btn-group { display: flex; border: 1px solid var(--primary); border-radius: 20px; overflow: hidden; }
+        .filter-btn { padding: 8px 16px; border: none; background: white; color: var(--primary); cursor: pointer; font-weight: 600; font-size: 0.9em; }
         .filter-btn.active { background: var(--primary); color: white; }
+        .filter-btn:not(:last-child) { border-right: 1px solid var(--primary); }
 
-        /* Charts Section */
+        /* Date Select */
+        .date-select { padding: 8px 12px; border-radius: 20px; border: 1px solid #ccc; font-size: 0.9em; background: white; color: #333; cursor: pointer; outline: none; }
+
+        /* Charts */
         .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
-        .chart-card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); height: 250px; }
-        @media (max-width: 600px) { .charts-grid { grid-template-columns: 1fr; } } /* Stack charts on mobile */
+        .chart-card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); height: 220px; position: relative; }
+        @media (max-width: 600px) { .charts-grid { grid-template-columns: 1fr; } }
 
-        /* Table Mobile Fix */
+        /* Table */
         .table-card { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden; }
-        .table-wrapper { overflow-x: auto; } /* Allows scrolling on small screens */
-        
-        table { width: 100%; border-collapse: collapse; min-width: 500px; } /* Ensures table doesn't squash */
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 500px; }
         th { background: #f8f9fa; padding: 12px; text-align: left; font-size: 0.8em; color: #666; border-bottom: 1px solid #ddd; }
         td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: middle; }
         
-        .ticker { font-weight: bold; font-size: 0.95em; }
-        .owner-tag { font-size: 0.7em; background: #eee; padding: 2px 6px; border-radius: 4px; margin-left: 5px; }
-        .money { font-family: monospace; font-weight: 600; }
+        .ticker { font-weight: bold; color: #2c3e50; }
+        .owner-badge { font-size: 0.7em; background: #e3f2fd; color: #0056b3; padding: 2px 6px; border-radius: 4px; margin-left: 5px; }
+        .money { font-family: monospace; font-weight: 600; font-size: 1em; }
         
-        /* Mini Sparkline */
-        .mini-chart { width: 100px; height: 40px; }
+        /* Changes colors */
+        .diff-pos { color: #28a745; font-size: 0.8em; }
+        .diff-neg { color: #dc3545; font-size: 0.8em; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header-card">
-        <div>Total Net Worth</div>
+        <div id="dateLabel">Total Net Worth</div>
         <div class="total-value" id="displayTotal">Loading...</div>
-        <div class="filters">
-            <button class="filter-btn active" onclick="setFilter('ALL')">ALL</button>
-            <button class="filter-btn" onclick="setFilter('URP')">URP</button>
-            <button class="filter-btn" onclick="setFilter('DUP')">DUP</button>
+        
+        <div class="controls">
+            <div class="btn-group">
+                <button class="filter-btn active" onclick="setOwnerFilter('ALL')">ALL</button>
+                <button class="filter-btn" onclick="setOwnerFilter('URP')">URP</button>
+                <button class="filter-btn" onclick="setOwnerFilter('DUP')">DUP</button>
+            </div>
+            
+            <select class="date-select" id="dateFilter" onchange="setDateFilter(this.value)">
+                <option value="LATEST">📅 Latest (Live)</option>
+                </select>
         </div>
     </div>
 
     <div class="charts-grid">
         <div class="chart-card">
-            <canvas id="growthChart"></canvas> </div>
+            <canvas id="growthChart"></canvas>
+        </div>
         <div class="chart-card">
-            <canvas id="pieChart"></canvas> </div>
+            <canvas id="pieChart"></canvas>
+        </div>
     </div>
 
     <div class="table-card">
@@ -66,9 +84,8 @@
                 <thead>
                     <tr>
                         <th>Stock</th>
-                        <th>Price</th>
+                        <th>Price <span id="priceHeaderLabel">(Live)</span></th>
                         <th>Value</th>
-                        <th>Trend (30D)</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
@@ -79,12 +96,13 @@
 
 <script>
     // --- CONFIGURATION ---
-    // Ensure this link is your PUBLISHED CSV link
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRw_iz9-dZrycABZQ_unuvRj8Pgeu6JSANkQyFlbQYEKzd9GyiqzgPAz6T492I32LhT37sJBp8JzU1o/pub?output=csv";
     // ---------------------
 
-    let allData = []; // Store data globally so we can filter later
-    let currentFilter = 'ALL';
+    let allData = [];
+    let currentOwner = 'ALL';
+    let timeTravelIndex = -1; // -1 means Latest. 0 = Oldest data point, 29 = Newest data point.
+    
     let mainPieChart = null;
     let mainGrowthChart = null;
 
@@ -92,11 +110,11 @@
         try {
             const res = await fetch(CSV_URL);
             const text = await res.text();
-            const rows = text.split('\n').slice(1); // Remove header
+            const rows = text.split('\n').slice(1);
 
             allData = rows.map(row => {
                 const c = row.split(',');
-                if (c.length < 6) return null; // Ensure we have 6 columns (including Owner)
+                if (c.length < 6) return null;
                 
                 const histRaw = c[4].replace(/"/g, '').split('|').map(Number).filter(n => !isNaN(n));
                 
@@ -104,95 +122,121 @@
                     ticker: c[0].replace('NSE:', '').replace('BOM:', ''),
                     qty: parseFloat(c[1]),
                     avg: parseFloat(c[2]),
-                    price: parseFloat(c[3]),
-                    history: histRaw,
-                    owner: c[5].trim().toUpperCase() // Column F is Owner
+                    livePrice: parseFloat(c[3]),
+                    history: histRaw, // Array of ~30 prices [Oldest ..... Newest]
+                    owner: c[5].trim().toUpperCase()
                 };
-            }).filter(item => item && item.price); // Remove bad rows
+            }).filter(item => item && item.qty);
 
-            renderDashboard(); // Initial Draw
+            populateDateDropdown();
+            renderDashboard();
 
-        } catch (err) { console.error(err); alert("Error loading data. Did you add the Owner Column?"); }
+        } catch (err) { console.error(err); alert("Error loading data"); }
     }
 
-    function setFilter(filter) {
-        currentFilter = filter;
-        // Update Buttons
+    // Generate "T-1 Day", "T-2 Days" options
+    function populateDateDropdown() {
+        const select = document.getElementById('dateFilter');
+        // We assume roughly 30 data points. We count backwards.
+        // History Array: [Day-30, Day-29 ... Day-1, Today]
+        // So index 29 is Today. Index 28 is Yesterday.
+        
+        for (let i = 1; i < 30; i++) {
+            const option = document.createElement('option');
+            // Logic: "0" means calculate the array index corresponding to "i days ago"
+            option.value = i; 
+            option.text = `↺ ${i} Market Days Ago`;
+            select.appendChild(option);
+        }
+    }
+
+    function setOwnerFilter(filter) {
+        currentOwner = filter;
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.classList.toggle('active', btn.innerText === filter);
         });
         renderDashboard();
     }
 
+    function setDateFilter(val) {
+        if (val === "LATEST") {
+            timeTravelIndex = -1;
+            document.getElementById('priceHeaderLabel').innerText = "(Live)";
+            document.getElementById('dateLabel').innerText = "Total Net Worth";
+        } else {
+            // Convert "days ago" to array index
+            // If array length is 30. 1 day ago is index 28. 5 days ago is index 24.
+            const daysAgo = parseInt(val);
+            timeTravelIndex = daysAgo; // We will handle the array math inside the loop
+            document.getElementById('priceHeaderLabel').innerText = `(Day -${daysAgo})`;
+            document.getElementById('dateLabel').innerText = `Value ${daysAgo} Days Ago`;
+        }
+        renderDashboard();
+    }
+
     function renderDashboard() {
         const tbody = document.querySelector('#stockTable tbody');
-        tbody.innerHTML = ''; // Clear table
+        tbody.innerHTML = '';
         
-        // 1. Filter Data
-        const filtered = allData.filter(d => currentFilter === 'ALL' || d.owner === currentFilter);
+        const filtered = allData.filter(d => currentOwner === 'ALL' || d.owner === currentOwner);
         
-        // 2. Calculate Totals & Prep Chart Data
         let grandTotal = 0;
-        let portfolioHistory = new Array(30).fill(0); // Assuming 30 days data
         let pieLabels = [];
         let pieValues = [];
+        let portfolioHistory = new Array(30).fill(0); // For the chart
 
-        filtered.forEach((item, index) => {
-            const val = item.qty * item.price;
+        filtered.forEach(item => {
+            // --- TIME TRAVEL LOGIC ---
+            let displayPrice = item.livePrice;
+            
+            // If Time Travel is active
+            if (timeTravelIndex !== -1) {
+                // history array: [old ... new]
+                // index = length - 1 - daysAgo
+                const histIndex = item.history.length - 1 - timeTravelIndex;
+                if (histIndex >= 0 && histIndex < item.history.length) {
+                    displayPrice = item.history[histIndex];
+                }
+            }
+
+            const val = item.qty * displayPrice;
             grandTotal += val;
             
-            // Add to Pie Data
+            // Pie Data
             pieLabels.push(item.ticker);
             pieValues.push(val);
 
-            // Add to Growth Chart (Summing daily history)
-            // We assume item.history has 30 points. If less, we skip to avoid errors.
-            if(item.history.length > 0) {
-                 item.history.forEach((price, dayIdx) => {
-                     // Normalize history length logic (simplified for robust view)
-                     if (portfolioHistory[dayIdx] !== undefined) {
-                         portfolioHistory[dayIdx] += (price * item.qty);
-                     }
-                 });
-            }
+            // Growth Chart Data (Summing history)
+            // We align arrays to the right (Newest)
+            const offset = 30 - item.history.length;
+            item.history.forEach((p, idx) => {
+                const globalIdx = idx + offset;
+                if(globalIdx >= 0 && globalIdx < 30) {
+                    portfolioHistory[globalIdx] += (p * item.qty);
+                }
+            });
 
-            // Draw Table Row
+            // Table Row
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>
-                    <div class="ticker">${item.ticker} <span class="owner-tag">${item.owner}</span></div>
-                    <div style="font-size:0.8em; color:#777">${item.qty} Qty</div>
+                    <div class="ticker">${item.ticker} <span class="owner-badge">${item.owner}</span></div>
+                    <div style="font-size:0.8em; color:#888">${item.qty} Qty</div>
                 </td>
-                <td class="money">₹${item.price.toFixed(1)}</td>
+                <td class="money">₹${displayPrice.toFixed(2)}</td>
                 <td class="money">₹${Math.round(val).toLocaleString('en-IN')}</td>
-                <td><div class="mini-chart"><canvas id="mini-${index}"></canvas></div></td>
             `;
             tbody.appendChild(tr);
-            
-            // We draw mini charts slightly later to ensure DOM exists
-            setTimeout(() => drawMiniChart(`mini-${index}`, item.history), 0);
         });
 
-        // 3. Update Total Text
         document.getElementById('displayTotal').innerText = '₹' + grandTotal.toLocaleString('en-IN', {maximumFractionDigits: 0});
 
-        // 4. Update Main Charts
+        // Update Charts
         updatePieChart(pieLabels, pieValues);
         updateGrowthChart(portfolioHistory);
     }
 
-    // --- CHART FUNCTIONS ---
-
-    function drawMiniChart(id, data) {
-        const ctx = document.getElementById(id).getContext('2d');
-        const color = data[data.length-1] >= data[0] ? '#28a745' : '#dc3545';
-        new Chart(ctx, {
-            type: 'line',
-            data: { labels: data.map(x=>''), datasets: [{ data: data, borderColor: color, borderWidth: 2, pointRadius: 0, fill: false }] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: false }, scales: { x: {display:false}, y: {display:false} } }
-        });
-    }
-
+    // --- CHART DRAWING ---
     function updatePieChart(labels, values) {
         const ctx = document.getElementById('pieChart');
         if (mainPieChart) mainPieChart.destroy();
@@ -203,17 +247,14 @@
                 labels: labels,
                 datasets: [{
                     data: values,
-                    backgroundColor: ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#FF6384', '#36A2EB', '#FFCE56'],
+                    backgroundColor: ['#4e79a7','#f28e2b','#e15759','#76b7b2','#59a14f','#edc948','#b07aa1','#ff9da7','#9c755f','#bab0ac'],
                     borderWidth: 0
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { 
-                    legend: { display: false }, 
-                    title: { display: true, text: 'Allocation' }
-                }
+                plugins: { legend: { display: false }, title: { display: true, text: 'Allocation' } }
             }
         });
     }
@@ -222,28 +263,30 @@
         const ctx = document.getElementById('growthChart');
         if (mainGrowthChart) mainGrowthChart.destroy();
 
+        // Calculate color (Green if grew, Red if shrank)
+        const isGrowing = data[data.length-1] >= data[0];
+        const lineColor = isGrowing ? '#28a745' : '#dc3545';
+        const bgFill = isGrowing ? 'rgba(40, 167, 69, 0.1)' : 'rgba(220, 53, 69, 0.1)';
+
         mainGrowthChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: data.map((_, i) => `Day ${i+1}`),
+                labels: Array.from({length: 30}, (_, i) => i), // Dummy labels
                 datasets: [{
-                    label: 'Total Value (Last 30 Days)',
                     data: data,
-                    borderColor: '#0056b3',
-                    backgroundColor: 'rgba(0,86,179,0.1)',
+                    borderColor: lineColor,
+                    backgroundColor: bgFill,
                     fill: true,
-                    tension: 0.3,
-                    pointRadius: 0
+                    tension: 0.4,
+                    pointRadius: 0,
+                    borderWidth: 2
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false }, title: { display: true, text: 'Portfolio Growth' } },
-                scales: { 
-                    x: { display: false },
-                    y: { ticks: { callback: function(value) { return '₹' + value/1000 + 'k'; } } }
-                }
+                plugins: { legend: { display: false }, title: { display: true, text: '30-Day Growth' }, tooltip: {enabled: false} },
+                scales: { x: { display: false }, y: { display: false } }
             }
         });
     }
