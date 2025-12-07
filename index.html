@@ -2,162 +2,253 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Portfolio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Portfolio 2.0</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
     <style>
-        body { font-family: sans-serif; background: #f4f6f8; margin: 0; padding: 20px; }
-        .container { max-width: 900px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        :root { --primary: #0056b3; --bg: #f0f2f5; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 10px; }
         
-        h1 { text-align: center; color: #333; }
+        /* Layout */
+        .container { max-width: 800px; margin: 0 auto; padding-bottom: 50px; }
         
-        /* Dashboard Stats */
-        .stats { text-align: center; margin-bottom: 30px; padding: 20px; background: #e3f2fd; border-radius: 8px; }
-        .total-label { font-size: 0.9em; color: #555; text-transform: uppercase; letter-spacing: 1px; }
-        .total-amount { font-size: 2.5em; font-weight: bold; color: #1565c0; margin-top: 5px; }
+        /* Header & Filters */
+        .header-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center; margin-bottom: 15px; }
+        .total-value { font-size: 2em; font-weight: 800; color: var(--primary); margin: 10px 0; }
+        
+        .filters { display: flex; justify-content: center; gap: 10px; margin-top: 15px; }
+        .filter-btn { padding: 8px 20px; border: 1px solid var(--primary); background: white; color: var(--primary); border-radius: 20px; cursor: pointer; font-weight: bold; }
+        .filter-btn.active { background: var(--primary); color: white; }
 
-        /* Table Styles */
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th { text-align: left; padding: 12px; background: #f8f9fa; color: #666; font-size: 0.85em; border-bottom: 2px solid #ddd; }
+        /* Charts Section */
+        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .chart-card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); height: 250px; }
+        @media (max-width: 600px) { .charts-grid { grid-template-columns: 1fr; } } /* Stack charts on mobile */
+
+        /* Table Mobile Fix */
+        .table-card { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden; }
+        .table-wrapper { overflow-x: auto; } /* Allows scrolling on small screens */
+        
+        table { width: 100%; border-collapse: collapse; min-width: 500px; } /* Ensures table doesn't squash */
+        th { background: #f8f9fa; padding: 12px; text-align: left; font-size: 0.8em; color: #666; border-bottom: 1px solid #ddd; }
         td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: middle; }
         
-        .stock-ticker { font-weight: bold; color: #2c3e50; }
-        .stock-shares { font-size: 0.8em; color: #888; }
+        .ticker { font-weight: bold; font-size: 0.95em; }
+        .owner-tag { font-size: 0.7em; background: #eee; padding: 2px 6px; border-radius: 4px; margin-left: 5px; }
+        .money { font-family: monospace; font-weight: 600; }
         
-        /* Mini Chart container */
-        .chart-box { width: 120px; height: 50px; }
+        /* Mini Sparkline */
+        .mini-chart { width: 100px; height: 40px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Portfolio Dashboard</h1>
-
-    <div class="stats">
-        <div class="total-label">Total Portfolio Value</div>
-        <div class="total-amount" id="grandTotal">Loading...</div>
+    <div class="header-card">
+        <div>Total Net Worth</div>
+        <div class="total-value" id="displayTotal">Loading...</div>
+        <div class="filters">
+            <button class="filter-btn active" onclick="setFilter('ALL')">ALL</button>
+            <button class="filter-btn" onclick="setFilter('URP')">URP</button>
+            <button class="filter-btn" onclick="setFilter('DUP')">DUP</button>
+        </div>
     </div>
 
-    <table id="portfolioTable">
-        <thead>
-            <tr>
-                <th>Stock</th>
-                <th>Price</th>
-                <th>Total Value</th>
-                <th>30-Day Trend</th>
-            </tr>
-        </thead>
-        <tbody>
-            </tbody>
-    </table>
+    <div class="charts-grid">
+        <div class="chart-card">
+            <canvas id="growthChart"></canvas> </div>
+        <div class="chart-card">
+            <canvas id="pieChart"></canvas> </div>
+    </div>
+
+    <div class="table-card">
+        <div class="table-wrapper">
+            <table id="stockTable">
+                <thead>
+                    <tr>
+                        <th>Stock</th>
+                        <th>Price</th>
+                        <th>Value</th>
+                        <th>Trend (30D)</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <script>
-    // YOUR LINK IS ALREADY HERE
+    // --- CONFIGURATION ---
+    // Ensure this link is your PUBLISHED CSV link
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRw_iz9-dZrycABZQ_unuvRj8Pgeu6JSANkQyFlbQYEKzd9GyiqzgPAz6T492I32LhT37sJBp8JzU1o/pub?output=csv";
+    // ---------------------
 
-    async function loadData() {
+    let allData = []; // Store data globally so we can filter later
+    let currentFilter = 'ALL';
+    let mainPieChart = null;
+    let mainGrowthChart = null;
+
+    async function init() {
         try {
-            const response = await fetch(CSV_URL);
-            const text = await response.text();
-            
-            // Split into rows and remove the header (first row)
-            const rows = text.split('\n').slice(1);
-            
-            const tbody = document.querySelector("#portfolioTable tbody");
-            let totalPortfolioValue = 0;
+            const res = await fetch(CSV_URL);
+            const text = await res.text();
+            const rows = text.split('\n').slice(1); // Remove header
 
-            rows.forEach((row, index) => {
-                // Ignore empty rows
-                if (!row.trim()) return;
-
-                // Split columns by comma
-                // CSV Structure: Ticker, Qty, Avg, LivePrice, HistoryString
-                const cols = row.split(',');
+            allData = rows.map(row => {
+                const c = row.split(',');
+                if (c.length < 6) return null; // Ensure we have 6 columns (including Owner)
                 
-                // Safety check: ensure we have enough columns
-                if (cols.length < 5) return;
-
-                const ticker = cols[0];
-                const qty = parseFloat(cols[1]);
-                const livePrice = parseFloat(cols[3]);
+                const histRaw = c[4].replace(/"/g, '').split('|').map(Number).filter(n => !isNaN(n));
                 
-                // CLEAN HISTORY: Google might add "Close" text or quotes. We filter for numbers only.
-                const historyRaw = cols[4]; 
-                const historyData = historyRaw.replace(/"/g, '') // remove quotes
-                                            .split('|')        // split by pipe
-                                            .map(val => parseFloat(val)) // convert to number
-                                            .filter(val => !isNaN(val)); // remove "Close" text
+                return {
+                    ticker: c[0].replace('NSE:', '').replace('BOM:', ''),
+                    qty: parseFloat(c[1]),
+                    avg: parseFloat(c[2]),
+                    price: parseFloat(c[3]),
+                    history: histRaw,
+                    owner: c[5].trim().toUpperCase() // Column F is Owner
+                };
+            }).filter(item => item && item.price); // Remove bad rows
 
-                // Calculate Value
-                const rowValue = qty * livePrice;
-                if (!isNaN(rowValue)) {
-                    totalPortfolioValue += rowValue;
-                }
+            renderDashboard(); // Initial Draw
 
-                // Create HTML Row
-                const tr = document.createElement("tr");
-                tr.innerHTML = `
-                    <td>
-                        <div class="stock-ticker">${ticker}</div>
-                        <div class="stock-shares">${qty} shares</div>
-                    </td>
-                    <td>₹${livePrice.toFixed(2)}</td>
-                    <td><strong>₹${rowValue.toLocaleString('en-IN', {maximumFractionDigits: 0})}</strong></td>
-                    <td>
-                        <div class="chart-box">
-                            <canvas id="chart-${index}"></canvas>
-                        </div>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-
-                // Draw Chart
-                drawChart(`chart-${index}`, historyData, livePrice);
-            });
-
-            // Update Grand Total
-            document.getElementById("grandTotal").innerText = 
-                "₹" + totalPortfolioValue.toLocaleString('en-IN', {maximumFractionDigits: 2});
-
-        } catch (error) {
-            console.error(error);
-            alert("Error loading data! check console.");
-        }
+        } catch (err) { console.error(err); alert("Error loading data. Did you add the Owner Column?"); }
     }
 
-    function drawChart(canvasId, data, currentPrice) {
-        const ctx = document.getElementById(canvasId).getContext('2d');
-        
-        // Green if up, Red if down
-        const start = data[0];
-        const end = data[data.length - 1];
-        const color = end >= start ? '#2ecc71' : '#e74c3c';
+    function setFilter(filter) {
+        currentFilter = filter;
+        // Update Buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.innerText === filter);
+        });
+        renderDashboard();
+    }
 
+    function renderDashboard() {
+        const tbody = document.querySelector('#stockTable tbody');
+        tbody.innerHTML = ''; // Clear table
+        
+        // 1. Filter Data
+        const filtered = allData.filter(d => currentFilter === 'ALL' || d.owner === currentFilter);
+        
+        // 2. Calculate Totals & Prep Chart Data
+        let grandTotal = 0;
+        let portfolioHistory = new Array(30).fill(0); // Assuming 30 days data
+        let pieLabels = [];
+        let pieValues = [];
+
+        filtered.forEach((item, index) => {
+            const val = item.qty * item.price;
+            grandTotal += val;
+            
+            // Add to Pie Data
+            pieLabels.push(item.ticker);
+            pieValues.push(val);
+
+            // Add to Growth Chart (Summing daily history)
+            // We assume item.history has 30 points. If less, we skip to avoid errors.
+            if(item.history.length > 0) {
+                 item.history.forEach((price, dayIdx) => {
+                     // Normalize history length logic (simplified for robust view)
+                     if (portfolioHistory[dayIdx] !== undefined) {
+                         portfolioHistory[dayIdx] += (price * item.qty);
+                     }
+                 });
+            }
+
+            // Draw Table Row
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>
+                    <div class="ticker">${item.ticker} <span class="owner-tag">${item.owner}</span></div>
+                    <div style="font-size:0.8em; color:#777">${item.qty} Qty</div>
+                </td>
+                <td class="money">₹${item.price.toFixed(1)}</td>
+                <td class="money">₹${Math.round(val).toLocaleString('en-IN')}</td>
+                <td><div class="mini-chart"><canvas id="mini-${index}"></canvas></div></td>
+            `;
+            tbody.appendChild(tr);
+            
+            // We draw mini charts slightly later to ensure DOM exists
+            setTimeout(() => drawMiniChart(`mini-${index}`, item.history), 0);
+        });
+
+        // 3. Update Total Text
+        document.getElementById('displayTotal').innerText = '₹' + grandTotal.toLocaleString('en-IN', {maximumFractionDigits: 0});
+
+        // 4. Update Main Charts
+        updatePieChart(pieLabels, pieValues);
+        updateGrowthChart(portfolioHistory);
+    }
+
+    // --- CHART FUNCTIONS ---
+
+    function drawMiniChart(id, data) {
+        const ctx = document.getElementById(id).getContext('2d');
+        const color = data[data.length-1] >= data[0] ? '#28a745' : '#dc3545';
         new Chart(ctx, {
             type: 'line',
+            data: { labels: data.map(x=>''), datasets: [{ data: data, borderColor: color, borderWidth: 2, pointRadius: 0, fill: false }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: false }, scales: { x: {display:false}, y: {display:false} } }
+        });
+    }
+
+    function updatePieChart(labels, values) {
+        const ctx = document.getElementById('pieChart');
+        if (mainPieChart) mainPieChart.destroy();
+        
+        mainPieChart = new Chart(ctx, {
+            type: 'doughnut',
             data: {
-                labels: data.map(x => ''), // No text labels
+                labels: labels,
                 datasets: [{
-                    data: data,
-                    borderColor: color,
-                    borderWidth: 2,
-                    pointRadius: 0,
-                    tension: 0.1,
-                    fill: false
+                    data: values,
+                    backgroundColor: ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#FF6384', '#36A2EB', '#FFCE56'],
+                    borderWidth: 0
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false }, tooltip: { enabled: false } },
-                scales: { x: { display: false }, y: { display: false } }
+                plugins: { 
+                    legend: { display: false }, 
+                    title: { display: true, text: 'Allocation' }
+                }
             }
         });
     }
 
-    loadData();
+    function updateGrowthChart(data) {
+        const ctx = document.getElementById('growthChart');
+        if (mainGrowthChart) mainGrowthChart.destroy();
+
+        mainGrowthChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.map((_, i) => `Day ${i+1}`),
+                datasets: [{
+                    label: 'Total Value (Last 30 Days)',
+                    data: data,
+                    borderColor: '#0056b3',
+                    backgroundColor: 'rgba(0,86,179,0.1)',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false }, title: { display: true, text: 'Portfolio Growth' } },
+                scales: { 
+                    x: { display: false },
+                    y: { ticks: { callback: function(value) { return '₹' + value/1000 + 'k'; } } }
+                }
+            }
+        });
+    }
+
+    init();
 </script>
 
 </body>
