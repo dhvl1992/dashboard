@@ -17,19 +17,19 @@
         .label { font-size: 0.8em; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
         .total-value { font-size: 2.6em; font-weight: 800; color: var(--primary); margin: 5px 0 20px 0; letter-spacing: -1px; }
 
-        /* BUTTONS */
+        /* CONTROLS */
         .controls { display: flex; flex-direction: column; gap: 12px; }
         
-        /* Owner Filter Segmented Control */
-        .filter-box { background: #f0f2f5; padding: 4px; border-radius: 12px; display: flex; }
-        .filter-btn { flex: 1; border: none; background: transparent; padding: 10px; font-weight: 600; color: #666; border-radius: 10px; font-size: 0.9em; transition: all 0.2s; cursor: pointer; }
+        /* Dynamic Filter Box */
+        .filter-box { background: #f0f2f5; padding: 4px; border-radius: 12px; display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; }
+        .filter-btn { flex: 1; min-width: 60px; border: none; background: transparent; padding: 10px; font-weight: 600; color: #666; border-radius: 10px; font-size: 0.9em; transition: all 0.2s; cursor: pointer; white-space: nowrap; }
         .filter-btn.active { background: white; color: var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
 
-        /* Date Button (Triggers Popup) */
+        /* Date Button */
         .date-trigger { width: 100%; background: white; border: 2px solid #eef2f5; padding: 12px; border-radius: 12px; font-weight: 600; color: #444; font-size: 0.95em; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
         .date-trigger:after { content: '▼'; font-size: 0.7em; color: #888; }
 
-        /* POPUP MODAL (Hidden by default) */
+        /* POPUP MODAL */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; align-items: flex-end; }
         .modal-overlay.open { display: flex; }
         .modal-content { background: white; width: 100%; max-height: 60vh; border-radius: 20px 20px 0 0; padding: 20px; overflow-y: auto; animation: slideUp 0.3s ease; }
@@ -37,49 +37,39 @@
         
         .modal-title { font-weight: bold; margin-bottom: 15px; font-size: 1.1em; color: #333; text-align: center; }
         .date-option { display: block; width: 100%; padding: 15px; border: none; border-bottom: 1px solid #eee; background: white; font-size: 1em; text-align: left; color: #333; }
-        .date-option:active { background: #f5f5f5; }
 
         /* CHARTS */
         .charts-area { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
         .chart-box { background: white; padding: 10px; border-radius: 16px; height: 180px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
         @media (max-width: 400px) { .charts-area { grid-template-columns: 1fr; } }
 
-        /* SMART LIST (Replaces Table) */
+        /* LIST VIEW */
         .list-card { background: white; border-radius: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); padding: 5px 0; }
-        
-        /* The Magic Row Layout */
         .stock-row { display: flex; justify-content: space-between; padding: 15px 20px; border-bottom: 1px solid #f4f4f4; align-items: center; }
         .stock-row:last-child { border-bottom: none; }
         
-        /* Left Side */
         .row-left { display: flex; flex-direction: column; gap: 2px; }
         .stock-name { font-weight: 700; font-size: 1em; color: #222; }
         .stock-badge { display: inline-block; font-size: 0.65em; background: #e3f2fd; color: #0056b3; padding: 2px 6px; border-radius: 4px; margin-left: 6px; vertical-align: middle; }
         .stock-qty { font-size: 0.8em; color: #888; }
 
-        /* Right Side */
         .row-right { text-align: right; }
         .stock-value { font-weight: 700; font-size: 1em; color: #222; font-family: 'Segoe UI', monospace; }
         .stock-price { font-size: 0.8em; color: #888; margin-top: 2px; }
-        
         .past-indicator { color: #e67e22; font-size: 0.7em; font-weight: 600; }
-
     </style>
 </head>
 <body>
 
 <div class="container">
-    
     <div class="header-card">
         <div class="label" id="mainLabel">Total Net Worth</div>
         <div class="total-value" id="displayTotal">...</div>
 
         <div class="controls">
-            <div class="filter-box">
+            <div class="filter-box" id="ownerFilterContainer">
                 <button class="filter-btn active" onclick="setOwner('ALL')">ALL</button>
-                <button class="filter-btn" onclick="setOwner('URP')">URP</button>
-                <button class="filter-btn" onclick="setOwner('DUP')">DUP</button>
-            </div>
+                </div>
 
             <button class="date-trigger" onclick="openDateModal()" id="dateBtnText">
                 📅 Latest (Live Data)
@@ -88,17 +78,11 @@
     </div>
 
     <div class="charts-area">
-        <div class="chart-box">
-            <canvas id="growthChart"></canvas>
-        </div>
-        <div class="chart-box">
-            <canvas id="pieChart"></canvas>
-        </div>
+        <div class="chart-box"><canvas id="growthChart"></canvas></div>
+        <div class="chart-box"><canvas id="pieChart"></canvas></div>
     </div>
 
-    <div class="list-card" id="stockList">
-        </div>
-
+    <div class="list-card" id="stockList"></div>
 </div>
 
 <div class="modal-overlay" id="dateModal" onclick="closeDateModal(event)">
@@ -110,11 +94,13 @@
 </div>
 
 <script>
+    // --- YOUR CSV LINK ---
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRw_iz9-dZrycABZQ_unuvRj8Pgeu6JSANkQyFlbQYEKzd9GyiqzgPAz6T492I32LhT37sJBp8JzU1o/pub?output=csv";
+    // ---------------------
 
     let allData = [];
     let currentOwner = 'ALL';
-    let timeIndex = -1; // -1 = Latest
+    let timeIndex = -1;
     let mainPie, mainGrowth;
 
     async function init() {
@@ -133,21 +119,48 @@
                     avg: parseFloat(c[2]),
                     livePrice: parseFloat(c[3]),
                     history: hist,
-                    owner: c[5].trim().toUpperCase()
+                    owner: c[5].trim().toUpperCase() // Reads Owner Column
                 };
             }).filter(i => i && i.qty);
 
+            generateOwnerButtons(); // AUTO-DETECT OWNERS
             populateDates();
             render();
-        } catch (e) { console.error(e); }
+        } catch (e) { console.error(e); alert("Data Error"); }
     }
 
-    // --- POPUP LOGIC ---
-    function openDateModal() { document.getElementById('dateModal').classList.add('open'); }
-    
-    function closeDateModal(e) { 
-        if(e.target.id === 'dateModal') document.getElementById('dateModal').classList.remove('open'); 
+    // --- NEW: DYNAMIC OWNER BUTTONS ---
+    function generateOwnerButtons() {
+        // 1. Find all unique owners from data
+        const uniqueOwners = [...new Set(allData.map(item => item.owner))].sort();
+        const container = document.getElementById('ownerFilterContainer');
+        
+        // 2. Clear existing (except ALL)
+        container.innerHTML = `<button class="filter-btn active" onclick="setOwner('ALL')">ALL</button>`;
+
+        // 3. Create a button for each owner found
+        uniqueOwners.forEach(owner => {
+            if(!owner) return; // Skip empty
+            const btn = document.createElement('button');
+            btn.className = 'filter-btn';
+            btn.innerText = owner;
+            btn.onclick = () => setOwner(owner);
+            container.appendChild(btn);
+        });
     }
+
+    function setOwner(o) {
+        currentOwner = o;
+        // Update active class on all buttons (including dynamically created ones)
+        document.querySelectorAll('.filter-btn').forEach(b => {
+            b.classList.toggle('active', b.innerText === o);
+        });
+        render();
+    }
+
+    // --- STANDARD RENDER LOGIC ---
+    function openDateModal() { document.getElementById('dateModal').classList.add('open'); }
+    function closeDateModal(e) { if(e.target.id === 'dateModal') document.getElementById('dateModal').classList.remove('open'); }
 
     function populateDates() {
         const list = document.getElementById('pastDatesList');
@@ -162,54 +175,36 @@
 
     function selectDate(val) {
         timeIndex = val === 'LATEST' ? -1 : val;
-        
-        // Update Button Text
-        const txt = val === 'LATEST' ? '📅 Latest (Live Data)' : `↺ ${val} Days Ago`;
-        document.getElementById('dateBtnText').innerText = txt;
-        
-        // Update Label
+        document.getElementById('dateBtnText').innerText = val === 'LATEST' ? '📅 Latest (Live Data)' : `↺ ${val} Days Ago`;
         document.getElementById('mainLabel').innerText = val === 'LATEST' ? "Total Net Worth" : `Net Worth (${val} Days Ago)`;
-
-        // Close Modal
         document.getElementById('dateModal').classList.remove('open');
-        render();
-    }
-
-    // --- RENDER LOGIC ---
-    function setOwner(o) {
-        currentOwner = o;
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.innerText === o));
         render();
     }
 
     function render() {
         const list = document.getElementById('stockList');
         list.innerHTML = '';
-        
         const filtered = allData.filter(d => currentOwner === 'ALL' || d.owner === currentOwner);
+        
         let total = 0;
         let pLabels=[], pValues=[], gData=new Array(30).fill(0);
 
         filtered.forEach(item => {
-            // Price Logic
             let price = item.livePrice;
             if(timeIndex !== -1) {
                 const idx = item.history.length - 1 - timeIndex;
                 if(idx >= 0) price = item.history[idx];
             }
-
             const val = item.qty * price;
             total += val;
             pLabels.push(item.ticker);
             pValues.push(val);
 
-            // History Logic
             const offset = 30 - item.history.length;
             item.history.forEach((p, i) => {
                 if(i+offset >=0 && i+offset < 30) gData[i+offset] += (p * item.qty);
             });
 
-            // HTML Row (Flexbox Layout)
             const div = document.createElement('div');
             div.className = 'stock-row';
             div.innerHTML = `
@@ -219,10 +214,7 @@
                 </div>
                 <div class="row-right">
                     <div class="stock-value">₹${Math.round(val).toLocaleString('en-IN')}</div>
-                    <div class="stock-price">
-                        ${timeIndex !== -1 ? '<span class="past-indicator">Past: </span>' : ''}
-                        ₹${price.toFixed(2)}
-                    </div>
+                    <div class="stock-price">${timeIndex !== -1 ? '<span class="past-indicator">Past: </span>' : ''}₹${price.toFixed(2)}</div>
                 </div>
             `;
             list.appendChild(div);
@@ -235,25 +227,19 @@
     function drawCharts(labels, values, histData) {
         const pCtx = document.getElementById('pieChart');
         const gCtx = document.getElementById('growthChart');
-        
         if(mainPie) mainPie.destroy();
         if(mainGrowth) mainGrowth.destroy();
 
-        // Pie
         mainPie = new Chart(pCtx, {
             type: 'doughnut',
             data: { labels: labels, datasets: [{ data: values, backgroundColor: ['#4e79a7','#f28e2b','#e15759','#76b7b2','#59a14f','#edc948'], borderWidth: 0 }] },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: false, title: {display: true, text:'Allocation'} }, layout: {padding: 10} }
         });
 
-        // Growth
         const isUp = histData[29] >= histData[0];
         mainGrowth = new Chart(gCtx, {
             type: 'line',
-            data: { 
-                labels: Array.from({length:30},(_,i)=>i), 
-                datasets: [{ data: histData, borderColor: isUp?'#28a745':'#dc3545', backgroundColor: isUp?'rgba(40,167,69,0.1)':'rgba(220,53,69,0.1)', fill: true, pointRadius:0, tension: 0.3 }] 
-            },
+            data: { labels: Array.from({length:30},(_,i)=>i), datasets: [{ data: histData, borderColor: isUp?'#28a745':'#dc3545', backgroundColor: isUp?'rgba(40,167,69,0.1)':'rgba(220,53,69,0.1)', fill: true, pointRadius:0, tension: 0.3 }] },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: false, title: {display: true, text:'30-Day Trend'} }, scales:{x:{display:false}, y:{display:false}}, layout: {padding: 10} }
         });
     }
